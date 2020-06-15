@@ -1,16 +1,15 @@
-#include "logviewwidget.h"
-
 #include <QApplication>
-#include <QTabWidget>
+
+#include "mainwindowwidget.h"
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setOrganizationName("shushudu");
+    QCoreApplication::setApplicationName("LogViewer");
+
     QApplication a(argc, argv);
 
-    QTabWidget w;
-
-    LogViewWidget lv1 ("D:\\1.log");
-    w.addTab(&lv1, "log");
+    MainWindowWidget w;
 
     w.show();
 

@@ -5,13 +5,18 @@
 #include <QPlainTextEdit>
 #include <QTextEdit>
 #include <QTimer>
+#include <QPushButton>
+#include <QSettings>
 
 #include "textstreamlinebuilder.h"
 #include "utf8streamconverter.h"
 #include "fileappendeddatareader.h"
+#include "mainwindowwidget.h"
 
 LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidget(parent)
 {
+    setObjectName(MainWindowWidget::getTabCaptionFromFilename(filename));
+
     fadr = new FileAppendedDataReader(filename);
     utf8 = new UTF8StreamConverter();
     tlb = new TextStreamLineBuilder();
@@ -26,6 +31,11 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     teLog->setWordWrapMode(QTextOption::NoWrap);
 
     teError = new QPlainTextEdit();
+    QObject::connect(teError, &QPlainTextEdit::textChanged,
+                         this, &LogViewWidget::errorFilterChanged);
+
+
+
     teWarn = new QPlainTextEdit();
     teHighlight = new QPlainTextEdit();
     teHide = new QPlainTextEdit();
@@ -37,8 +47,30 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     hb->addWidget(teHighlight);
     hb->addWidget(teHide);
 
-    mainLayout->addWidget(teLog, 5);
-    mainLayout->addLayout(hb, 1);
+    btnReRead = new QPushButton("ReRead");
+    QHBoxLayout *hbuttons = new QHBoxLayout();
+    hbuttons->addWidget(btnReRead);
+
+    QObject::connect(btnReRead, &QPushButton::clicked,
+                         this, &LogViewWidget::reRead);
+
+
+    btnStart = new QPushButton("Start");
+    hbuttons->addWidget(btnStart);
+
+    QObject::connect(btnStart, &QPushButton::clicked,
+                         this, &LogViewWidget::start);
+
+    btnStop = new QPushButton("Stop");
+    hbuttons->addWidget(btnStop);
+
+    QObject::connect(btnStop, &QPushButton::clicked,
+                         this, &LogViewWidget::stop);
+
+
+    mainLayout->addLayout(hbuttons, 1);
+    mainLayout->addWidget(teLog, 10);
+    mainLayout->addLayout(hb, 2);
 
     fadr->toEnd();
 
@@ -54,7 +86,36 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     timer = new QTimer(this);
 
     QObject::connect(timer, &QTimer::timeout, fadr, &FileAppendedDataReader::check);
-    timer->start(200);
+    stop();
+
+
+    QSettings settings;
+
+    QString str = settings.value(QString("ErrorFilter_%1").arg(objectName())).toString();
+    teError->setPlainText(str);
+
+    str = settings.value(QString("WarnFilter_%1").arg(objectName())).toString();
+    teWarn->setPlainText(str);
+
+    str = settings.value(QString("HighlightFilter_%1").arg(objectName())).toString();
+    teHighlight->setPlainText(str);
+
+    str = settings.value(QString("HideFilter_%1").arg(objectName())).toString();
+    teHide->setPlainText(str);
+}
+
+LogViewWidget::~LogViewWidget()
+{
+    QSettings settings;
+    settings.setValue(QString("ErrorFilter_%1").arg(objectName()), teError->toPlainText());
+    settings.setValue(QString("WarnFilter_%1").arg(objectName()), teWarn->toPlainText());
+    settings.setValue(QString("HighlightFilter_%1").arg(objectName()), teHighlight->toPlainText());
+    settings.setValue(QString("HideFilter_%1").arg(objectName()), teHide->toPlainText());
+}
+
+QString LogViewWidget::errorFilter()
+{
+    return teError->toPlainText();
 }
 
 bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
@@ -79,6 +140,26 @@ bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
     }
 
     return false;
+}
+
+void LogViewWidget::reRead()
+{
+    teLog->setText("");
+    fadr->toBegin();
+}
+
+void LogViewWidget::start()
+{
+    timer->start(200);
+    btnStop->setEnabled(true);
+    btnStart->setEnabled(false);
+}
+
+void LogViewWidget::stop()
+{
+    timer->stop();
+    btnStop->setEnabled(false);
+    btnStart->setEnabled(true);
 }
 
 void LogViewWidget::setColorForLine(const QString & line)

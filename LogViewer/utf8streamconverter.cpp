@@ -14,6 +14,11 @@ void UTF8StreamConverter::addNewByte(const char c)
             total_octet_count = 2;
             c1 = c & 0b00011111;
         }
+        else if ((c & 0b11110000) == 0b11100000)
+        {
+            total_octet_count = 3;
+            c1 = c & 0b00001111;
+        }
         else
         {
             Q_ASSERT(0);
@@ -26,6 +31,19 @@ void UTF8StreamConverter::addNewByte(const char c)
         if ((c & 0b11000000) == 0b10000000)
         {
             c2 = c & 0b00111111;
+        }
+        else
+        {
+            Q_ASSERT(0);
+        }
+    }
+    else if (cur_octet == 2)
+    {
+        Q_ASSERT(total_octet_count > 2);
+
+        if ((c & 0b11000000) == 0b10000000)
+        {
+            c3 = c & 0b00111111;
         }
         else
         {
@@ -58,6 +76,23 @@ void UTF8StreamConverter::addNewByte(const char c)
             wchar_t wCh = c1;
             wCh <<=6;
             wCh |= c2;
+
+            QChar ch = wCh;
+
+            emit newChar(ch);
+        }
+        else if (total_octet_count == 3)
+        {
+            cur_octet = 0;
+            total_octet_count = 0;
+
+            Q_ASSERT((c1 & 0b11110000) == 0);
+
+            wchar_t wCh = c1;
+            wCh <<=6;
+            wCh |= c2;
+            wCh <<=6;
+            wCh |= c3;
 
             QChar ch = wCh;
 

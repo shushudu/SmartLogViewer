@@ -6,6 +6,7 @@
 class QVBoxLayout;
 class QPlainTextEdit;
 class QTextEdit;
+class QPushButton;
 
 class FileAppendedDataReader;
 class UTF8StreamConverter;
@@ -26,14 +27,20 @@ class LogViewWidget : public QWidget
     QPlainTextEdit * teHighlight;
     QPlainTextEdit * teHide;
     QTextEdit * teLog;
+    QPushButton * btnReRead;
+    QPushButton * btnStart;
+    QPushButton * btnStop;
 
 public:
     LogViewWidget(const QString & filename, QWidget* parent = 0);
+    ~LogViewWidget();
 
 public slots:
     void addNewLine(const QString & line);
     void setColorForLine(const QString & line);
-
+    void reRead();
+    void start();
+    void stop();
 };
 
 #endif // LOGVIEWWIDGET_H

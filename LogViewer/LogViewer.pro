@@ -19,12 +19,14 @@ SOURCES += \
     fileappendeddatareader.cpp \
     logviewwidget.cpp \
     main.cpp \
+    mainwindowwidget.cpp \
     textstreamlinebuilder.cpp \
     utf8streamconverter.cpp
 
 HEADERS += \
     fileappendeddatareader.h \
     logviewwidget.h \
+    mainwindowwidget.h \
     textstreamlinebuilder.h \
     utf8streamconverter.h
 

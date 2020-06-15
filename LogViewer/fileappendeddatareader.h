@@ -19,6 +19,7 @@ signals:
 public slots:
     void check();
     void toEnd();
+    void toBegin();
 };
 
 #endif // FILEAPPENDEDDATAREADER_H

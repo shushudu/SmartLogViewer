@@ -42,3 +42,8 @@ void FileAppendedDataReader::toEnd()
 
     position = file.size();
 }
+
+void FileAppendedDataReader::toBegin()
+{
+    position = 0;
+}
