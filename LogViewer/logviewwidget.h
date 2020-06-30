@@ -27,6 +27,7 @@ class LogViewWidget : public QWidget
     QPlainTextEdit * teHighlight;
     QPlainTextEdit * teHide;
     QTextEdit * teLog;
+    QPushButton * btnClear;
     QPushButton * btnReRead;
     QPushButton * btnStart;
     QPushButton * btnStop;
@@ -38,6 +39,7 @@ public:
 public slots:
     void addNewLine(const QString & line);
     void setColorForLine(const QString & line);
+    void clear();
     void reRead();
     void start();
     void stop();

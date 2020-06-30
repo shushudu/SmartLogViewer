@@ -21,7 +21,6 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     utf8 = new UTF8StreamConverter();
     tlb = new TextStreamLineBuilder();
 
-
     mainLayout = new QVBoxLayout(this);
     teLog = new QTextEdit();
 
@@ -30,11 +29,10 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     teLog->setReadOnly(true);
     teLog->setWordWrapMode(QTextOption::NoWrap);
 
+    QFont teFont("Courier New", 10, 0, false);
+    teLog->setFont(teFont);
+
     teError = new QPlainTextEdit();
-    QObject::connect(teError, &QPlainTextEdit::textChanged,
-                         this, &LogViewWidget::errorFilterChanged);
-
-
 
     teWarn = new QPlainTextEdit();
     teHighlight = new QPlainTextEdit();
@@ -47,23 +45,25 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     hb->addWidget(teHighlight);
     hb->addWidget(teHide);
 
-    btnReRead = new QPushButton("ReRead");
     QHBoxLayout *hbuttons = new QHBoxLayout();
-    hbuttons->addWidget(btnReRead);
 
+    btnClear = new QPushButton("Clear");
+    hbuttons->addWidget(btnClear);
+    QObject::connect(btnClear, &QPushButton::clicked,
+                         this, &LogViewWidget::clear);
+
+    btnReRead = new QPushButton("ReRead");
+    hbuttons->addWidget(btnReRead);
     QObject::connect(btnReRead, &QPushButton::clicked,
                          this, &LogViewWidget::reRead);
 
-
     btnStart = new QPushButton("Start");
     hbuttons->addWidget(btnStart);
-
     QObject::connect(btnStart, &QPushButton::clicked,
                          this, &LogViewWidget::start);
 
     btnStop = new QPushButton("Stop");
     hbuttons->addWidget(btnStop);
-
     QObject::connect(btnStop, &QPushButton::clicked,
                          this, &LogViewWidget::stop);
 
@@ -88,7 +88,6 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     QObject::connect(timer, &QTimer::timeout, fadr, &FileAppendedDataReader::check);
     stop();
 
-
     QSettings settings;
 
     QString str = settings.value(QString("ErrorFilter_%1").arg(objectName())).toString();
@@ -111,11 +110,6 @@ LogViewWidget::~LogViewWidget()
     settings.setValue(QString("WarnFilter_%1").arg(objectName()), teWarn->toPlainText());
     settings.setValue(QString("HighlightFilter_%1").arg(objectName()), teHighlight->toPlainText());
     settings.setValue(QString("HideFilter_%1").arg(objectName()), teHide->toPlainText());
-}
-
-QString LogViewWidget::errorFilter()
-{
-    return teError->toPlainText();
 }
 
 bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
@@ -142,10 +136,18 @@ bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
     return false;
 }
 
+void LogViewWidget::clear()
+{
+    teLog->setText("");
+    fadr->toEnd();
+    start();
+}
+
 void LogViewWidget::reRead()
 {
     teLog->setText("");
     fadr->toBegin();
+    start();
 }
 
 void LogViewWidget::start()
@@ -168,6 +170,7 @@ void LogViewWidget::setColorForLine(const QString & line)
     {
         teLog->setTextColor(QColor::fromRgb(255, 255, 255));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 0, 0));
+        teLog->setFontWeight(2);
         return;
     }
 
@@ -175,6 +178,7 @@ void LogViewWidget::setColorForLine(const QString & line)
     {
         teLog->setTextColor(QColor::fromRgb(0, 0, 0));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 255, 0));
+        teLog->setFontWeight(0);
         return;
     }
 
@@ -182,6 +186,7 @@ void LogViewWidget::setColorForLine(const QString & line)
     {
         teLog->setTextColor(QColor::fromRgb(0, 0, 0));
         teLog->setTextBackgroundColor(QColor::fromRgb(0, 255, 0));
+        teLog->setFontWeight(0);
         return;
     }
 
@@ -189,11 +194,13 @@ void LogViewWidget::setColorForLine(const QString & line)
     {
         teLog->setTextColor(QColor::fromRgb(192, 192, 192));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 255, 255));
+        teLog->setFontWeight(0);
         return;
     }
 
     teLog->setTextColor(QColor::fromRgb(0, 0, 0));
     teLog->setTextBackgroundColor(QColor::fromRgb(255, 255, 255));
+    teLog->setFontWeight(0);
 }
 
 void LogViewWidget::addNewLine(const QString & line)
