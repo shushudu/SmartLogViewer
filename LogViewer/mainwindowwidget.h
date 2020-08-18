@@ -1,9 +1,12 @@
 #ifndef MAINWINDOWWIDGET_H
 #define MAINWINDOWWIDGET_H
 
-#include <QTabWidget>
+#include <QWidget>
 
-class MainWindowWidget : public QTabWidget
+class QTabWidget;
+class QPushButton;
+
+class MainWindowWidget : public QWidget
 {
     Q_OBJECT
 
@@ -15,6 +18,10 @@ public:
     MainWindowWidget(QWidget* parent = 0);
 
     void openFile(const QString & path, const QString & mask);
+
+private:
+    QTabWidget *tabs = nullptr;
+    QPushButton * butClearAll = nullptr;
 };
 
 #endif // MAINWINDOWWIDGET_H
