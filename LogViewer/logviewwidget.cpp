@@ -33,19 +33,34 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     teLog->setFont(teFont);
 
     teError = new QPlainTextEdit();
-
     teWarn = new QPlainTextEdit();
     teHighlight = new QPlainTextEdit();
     teHide = new QPlainTextEdit();
 
-    QHBoxLayout *hb = new QHBoxLayout();
+    teErrorExclude = new QPlainTextEdit();
+    teWarnExclude = new QPlainTextEdit();
+    teHighlightExclude = new QPlainTextEdit();
+    teHideExclude = new QPlainTextEdit();
 
-    hb->addWidget(teError);
-    hb->addWidget(teWarn);
-    hb->addWidget(teHighlight);
-    hb->addWidget(teHide);
+    QVBoxLayout * filterLayout = new QVBoxLayout();
 
-    QHBoxLayout *hbuttons = new QHBoxLayout();
+    QHBoxLayout * filterLayoutTop = new QHBoxLayout();
+    QHBoxLayout * filterLayoutBottom = new QHBoxLayout();
+
+    filterLayoutTop->addWidget(teError);
+    filterLayoutTop->addWidget(teWarn);
+    filterLayoutTop->addWidget(teHighlight);
+    filterLayoutTop->addWidget(teHide);
+
+    filterLayoutBottom->addWidget(teErrorExclude);
+    filterLayoutBottom->addWidget(teWarnExclude);
+    filterLayoutBottom->addWidget(teHighlightExclude);
+    filterLayoutBottom->addWidget(teHideExclude);
+
+    filterLayout->addLayout(filterLayoutTop);
+    filterLayout->addLayout(filterLayoutBottom);
+
+    hbuttons = new QHBoxLayout();
 
     btnClear = new QPushButton("Clear");
     hbuttons->addWidget(btnClear);
@@ -67,10 +82,20 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
     QObject::connect(btnStop, &QPushButton::clicked,
                          this, &LogViewWidget::stop);
 
+    btnExpand = new QPushButton("Show/Hide filters");
+    hbuttons->addWidget(btnExpand);
+    QObject::connect(btnExpand, &QPushButton::clicked,
+                         this, &LogViewWidget::expand);
+
+
+    filters = new QWidget();
+    filters->setLayout(filterLayout);
+    filters->setVisible(false);
+
 
     mainLayout->addLayout(hbuttons, 1);
-    mainLayout->addWidget(teLog, 10);
-    mainLayout->addLayout(hb, 2);
+    mainLayout->addWidget(teLog, 3);
+    mainLayout->addWidget(filters, 7);
 
     fadr->toEnd();
 
@@ -101,6 +126,19 @@ LogViewWidget::LogViewWidget(const QString & filename, QWidget* parent) : QWidge
 
     str = settings.value(QString("HideFilter_%1").arg(objectName())).toString();
     teHide->setPlainText(str);
+
+
+    str = settings.value(QString("ErrorExcludeFilter_%1").arg(objectName())).toString();
+    teErrorExclude->setPlainText(str);
+
+    str = settings.value(QString("WarnExcludeFilter_%1").arg(objectName())).toString();
+    teWarnExclude->setPlainText(str);
+
+    str = settings.value(QString("HighlightExcludeFilter_%1").arg(objectName())).toString();
+    teHighlightExclude->setPlainText(str);
+
+    str = settings.value(QString("HideExcludeFilter_%1").arg(objectName())).toString();
+    teHideExclude->setPlainText(str);
 }
 
 LogViewWidget::~LogViewWidget()
@@ -110,6 +148,10 @@ LogViewWidget::~LogViewWidget()
     settings.setValue(QString("WarnFilter_%1").arg(objectName()), teWarn->toPlainText());
     settings.setValue(QString("HighlightFilter_%1").arg(objectName()), teHighlight->toPlainText());
     settings.setValue(QString("HideFilter_%1").arg(objectName()), teHide->toPlainText());
+    settings.setValue(QString("ErrorExcludeFilter_%1").arg(objectName()), teErrorExclude->toPlainText());
+    settings.setValue(QString("WarnExcludeFilter_%1").arg(objectName()), teWarnExclude->toPlainText());
+    settings.setValue(QString("HighExcludelightFilter_%1").arg(objectName()), teHighlightExclude->toPlainText());
+    settings.setValue(QString("HideExcludeFilter_%1").arg(objectName()), teHideExclude->toPlainText());
 }
 
 bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
@@ -134,6 +176,11 @@ bool ColorFromTextEditRegexp(QPlainTextEdit * te, const QString & line)
     }
 
     return false;
+}
+
+void LogViewWidget::expand()
+{
+    filters->setVisible(!filters->isVisible());
 }
 
 void LogViewWidget::clear()
@@ -166,7 +213,7 @@ void LogViewWidget::stop()
 
 void LogViewWidget::setColorForLine(const QString & line)
 {
-    if (ColorFromTextEditRegexp(teError, line))
+    if (!ColorFromTextEditRegexp(teErrorExclude, line) && ColorFromTextEditRegexp(teError, line))
     {
         teLog->setTextColor(QColor::fromRgb(255, 255, 255));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 0, 0));
@@ -174,7 +221,7 @@ void LogViewWidget::setColorForLine(const QString & line)
         return;
     }
 
-    if (ColorFromTextEditRegexp(teWarn, line))
+    if (!ColorFromTextEditRegexp(teWarnExclude, line) && ColorFromTextEditRegexp(teWarn, line))
     {
         teLog->setTextColor(QColor::fromRgb(0, 0, 0));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 255, 0));
@@ -182,7 +229,7 @@ void LogViewWidget::setColorForLine(const QString & line)
         return;
     }
 
-    if (ColorFromTextEditRegexp(teHighlight, line))
+    if (!ColorFromTextEditRegexp(teHighlightExclude, line) && ColorFromTextEditRegexp(teHighlight, line))
     {
         teLog->setTextColor(QColor::fromRgb(0, 0, 0));
         teLog->setTextBackgroundColor(QColor::fromRgb(0, 255, 0));
@@ -190,7 +237,7 @@ void LogViewWidget::setColorForLine(const QString & line)
         return;
     }
 
-    if (ColorFromTextEditRegexp(teHide, line))
+    if (!ColorFromTextEditRegexp(teHideExclude, line) && ColorFromTextEditRegexp(teHide, line))
     {
         teLog->setTextColor(QColor::fromRgb(192, 192, 192));
         teLog->setTextBackgroundColor(QColor::fromRgb(255, 255, 255));
@@ -205,7 +252,17 @@ void LogViewWidget::setColorForLine(const QString & line)
 
 void LogViewWidget::addNewLine(const QString & line)
 {
+    QTextCursor cursor = teLog->textCursor();
+    cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+    teLog->setTextCursor(cursor);
+
     setColorForLine(line);
 
     teLog->append(line);
+
+    cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+    teLog->setTextCursor(cursor);
+
 }

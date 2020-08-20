@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QVBoxLayout;
+class QHBoxLayout;
 class QPlainTextEdit;
 class QTextEdit;
 class QPushButton;
@@ -22,15 +23,25 @@ class LogViewWidget : public QWidget
 
     QTimer * timer;
     QVBoxLayout * mainLayout;
+    QHBoxLayout * hbuttons;
+
     QPlainTextEdit * teError;
     QPlainTextEdit * teWarn;
     QPlainTextEdit * teHighlight;
     QPlainTextEdit * teHide;
+
+    QPlainTextEdit * teErrorExclude;
+    QPlainTextEdit * teWarnExclude;
+    QPlainTextEdit * teHighlightExclude;
+    QPlainTextEdit * teHideExclude;
+
     QTextEdit * teLog;
     QPushButton * btnClear;
     QPushButton * btnReRead;
     QPushButton * btnStart;
     QPushButton * btnStop;
+    QPushButton * btnExpand;
+    QWidget * filters;
 
 public:
     LogViewWidget(const QString & filename, QWidget* parent = 0);
@@ -39,6 +50,7 @@ public:
 public slots:
     void addNewLine(const QString & line);
     void setColorForLine(const QString & line);
+    void expand();
     void clear();
     void reRead();
     void start();
